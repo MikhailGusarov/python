@@ -4,13 +4,13 @@ from DBcm import UseDatabase
 
 app = Flask(__name__)
 
-dbconfig = {'host' : '127.0.0.1',
+app.config['dbconfig'] = {'host' : '127.0.0.1',
                 'user' : 'vsearch',
                 'password' : 'vsearchpasswd',
                 'database' : 'vsearchlogDB'}
 
 def log_request(req: 'flask_request',res: str) -> None:
-    with UseDatabase(dbconfig) as cursor:
+    with UseDatabase(app.config['dbconfig'] ) as cursor:
         _SQL = """insert into log
             (phrase, letters, ip, browser_string, results)
             values
@@ -42,7 +42,7 @@ def entry_page() -> 'html':
 
 @app.route('/viewlog')
 def view_the_log() -> 'html':
-    with UseDatabase(dbconfig) as cursor:
+    with UseDatabase(app.config['dbconfig'] ) as cursor:
         _SQL = """select phrase, letters, ip, browser_string, results from log"""
         cursor.execute(_SQL)
         contents = cursor.fetchall()

@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, escape
 from vsearch import search4letters
-import mysql.connector
+from DBcm import UseDatabase
 
 app = Flask(__name__)
 
@@ -12,10 +12,10 @@ dbconfig = {'host' : '127.0.0.1',
 def log_request(req: 'flask_request',res: str) -> None:
     with UseDatabase(dbconfig) as cursor:
         _SQL = """insert into log
-            (phrase, letters, ip, browser_string, result)
+            (phrase, letters, ip, browser_string, results)
             values
             (%s,%s,%s,%s,%s)"""
-    cursor.execute(_SQL,(req.form['phrase'],
+        cursor.execute(_SQL,(req.form['phrase'],
                          req.form['letters'],
                          req.remote_addr,
                          req.user_agent.browser,
@@ -42,17 +42,10 @@ def entry_page() -> 'html':
 
 @app.route('/viewlog')
 def view_the_log() -> 'html':
-#    contents = []
-#    with open('vsearch.log')as log:
-#        for row in log:
-#            contents.append(escape(row).split('|'))
-    conn = mysql.connector.connect(**dbconfig)
-    cursor = conn.cursor()
-    _SQL = """select phrase, letters, ip, browser_string, result from log"""
-    cursor.execute(_SQL)
-    contents = cursor.fetchall()
-    cursor.close()
-    conn.close()
+    with UseDatabase(dbconfig) as cursor:
+        _SQL = """select phrase, letters, ip, browser_string, results from log"""
+        cursor.execute(_SQL)
+        contents = cursor.fetchall()
     return render_template('viewlog.html',
                            the_title='Log search4wed',
                            the_row_titles=('Phrase', 'Letters', 'IP', 'Browser', 'Results'),
